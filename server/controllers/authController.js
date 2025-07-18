@@ -1,6 +1,7 @@
 // We'll create all the controller functions here and using those functions we'll create API endpoints in the routes file
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import transporter from '../config/nodeMailer.js';
 import User from '../models/userModel.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
@@ -35,6 +36,16 @@ const register = asyncHandler(async (req, res) => {
     sameSite: process.env.NODE_ENV === 'production' ? 'none': 'strict', // Helps prevent CSRF attacks
     maxAge: 7 * 24 * 60 * 60 * 1000
   })
+
+  // sending welcome mail
+   const mailOptions = {
+    from: process.env.SENDER_EMAIL, // Use the email you used to create your Brevo account
+    to: email, // recipient's email
+    subject: 'Welcome to Our Service',
+    text:`Welcome to our website. Your account has been created with email id: ${email}`
+   }
+
+   await transporter.sendMail(mailOptions); // this line sends the email
 
   res.status(201).json(new ApiResponse(201, { userId: user._id }, "User registered successfully")); 
   // not sure about user id
