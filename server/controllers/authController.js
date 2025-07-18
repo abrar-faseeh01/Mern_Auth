@@ -6,6 +6,7 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
+// registration
 const register = asyncHandler(async (req, res) => {
     //get user details from the frontend
   const { name, email, password } = req.body;
@@ -30,8 +31,8 @@ const register = asyncHandler(async (req, res) => {
   // Set the token in a cookie
   res.cookie('token',token,{
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' ? 'none' : 'strict', // Set to true in production
-    sameSite: 'strict', // Helps prevent CSRF attacks
+    secure: process.env.NODE_ENV === 'production' , // Set to true in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'none': 'strict', // Helps prevent CSRF attacks
     maxAge: 7 * 24 * 60 * 60 * 1000
   })
 
@@ -39,6 +40,7 @@ const register = asyncHandler(async (req, res) => {
   // not sure about user id
 });
 
+//login
 const login = asyncHandler(async (req, res) => {
     const {email, password}= req.body;
     if(!email || ! password){
@@ -62,15 +64,26 @@ const login = asyncHandler(async (req, res) => {
   // Set the token in a cookie
   res.cookie('token',token,{
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' ? 'none' : 'strict', // Set to true in production
-    sameSite: 'strict', // Helps prevent CSRF attacks
+    secure: process.env.NODE_ENV === 'production' , // Set to true in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'none': 'strict', // Helps prevent CSRF attacks
     maxAge: 7 * 24 * 60 * 60 * 1000
   })
   
   res.status(201).json(new ApiResponse(201, { userId: user._id }, "User logged in successfully")); 
 })
 
+//logout
+const logout = asyncHandler(async(req,res)=>{
+    res.clearCookie('token',{  
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production' , // Set to true in production
+        sameSite: process.env.NODE_ENV === 'production' ? 'none': 'strict', // Helps prevent CSRF attacks
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+    res.status(200).json(new ApiResponse(200, null, "User logged out successfully"));
+})
+
 export {
-    login, register
+    login, logout, register
 };
 
