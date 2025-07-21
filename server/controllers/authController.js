@@ -94,7 +94,71 @@ const logout = asyncHandler(async(req,res)=>{
     res.status(200).json(new ApiResponse(200, null, "User logged out successfully"));
 })
 
-export {
-    login, logout, register
-};
+
+// verify otp
+const sendVerifyOtp =asyncHandler(async (req, res) => {
+    const{userId} = req.body;
+    const user = await User.findById(userId);
+    if(user.isAccountVerified){
+        throw new ApiError(400, "Account is already verified");
+    }
+
+    // if the user is not verified, generate a new OTP
+    const otp = String( Math.floor(100000 + Math.random() * 900000));
+
+    user.verifyOtp = otp; // save the otp in the database
+    user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000; // OTP expires in 1 day
+    await user.save();
+
+    // now send the OTP to the user via email
+    const mailOptions ={
+        from: process.env.SENDER_EMAIL, // Use the email you used to create your Brevo account
+        to: user.email, // recipient's email
+        subject: "Account Verification OTP",
+        text:`Your OTP is ${otp}. Verify your account with this OTP.`
+    }
+
+    await transporter.sendMail(mailOptions); 
+    res.status(200).json(new ApiResponse(200, null, "OTP sent successfully"));
+
+})
+
+// get the otp and verify the user
+const verifyEmail = asyncHandler(async (req, res) => {
+  const {userId,otp}= req.body;
+
+  if(!userId||!otp){
+    throw new ApiError(400, "Mising details");
+  }
+  const user = await User.findById(userId);
+  if(!user){
+    throw new ApiError(400, "User does not exist");
+  }
+  // check if the otp matches or not
+  if(user.verifyOtp === '' || user.verifyOtp!== otp){
+    throw new ApiError(400, "Invalid OTP");
+  }
+  // check if the otp is expired or not
+  if(user.verifyOtpExpireAt < Date.now()){
+    throw new ApiError(400, "OTP expired");
+  }
+  // if the otp is valid, verify the user
+  user.isAccountVerified = true;
+  // reset the otp and otp expire time
+  user.verifyOtp = '';
+  user.verifyOtpExpireAt = 0;
+  await user.save();
+  res.status(200).json(new ApiResponse(200, null, "Account verified successfully"));
+})
+
+// check user is authenticated or not
+const isAuthenticated = async(req,res)=>{
+   try {
+    return res.status(200).json(new ApiResponse(200, { userId: req.body.userId }, "User is authenticated"));
+   } catch (error) {
+    throw new ApiError(500, "Internal Server Error");
+    
+   }
+}
+export { isAuthenticated, login, logout, register, sendVerifyOtp, verifyEmail };
 
