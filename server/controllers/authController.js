@@ -160,5 +160,62 @@ const isAuthenticated = async(req,res)=>{
     
    }
 }
-export { isAuthenticated, login, logout, register, sendVerifyOtp, verifyEmail };
+
+// password reset otp
+const sendResetOtp = asyncHandler(async (req, res) => {
+  const {email} = req.body;
+  if(!email){
+    throw new ApiError(400, "Email is required");
+  }
+  const user = await User.findOne({email});
+  if(!user){
+    throw new ApiError(400, "User does not exist");
+  }
+  // generate the reset OTP
+  const otp = String( Math.floor(100000 + Math.random() * 900000));
+
+    user.resetOtp = otp; // save the otp in the database
+    user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000; // OTP expires in 1 day
+    await user.save();
+
+    // now send the OTP to the user via email
+    const mailOptions ={
+        from: process.env.SENDER_EMAIL, 
+        to: user.email, 
+        subject: "Password Reset OTP",
+        text:`Your OTP is ${otp}. Reset your password with this OTP.`
+    }
+
+    await transporter.sendMail(mailOptions); 
+    res.status(200).json(new ApiResponse(200, null, "OTP sent successfully"));
+})
+
+// reset password using the otp
+const resetPassword = asyncHandler(async (req, res) => {
+  const{email, otp, newPassword}= req.body;
+  if(!email || !otp || !newPassword){
+    throw new ApiError(400, "All fields are required");
+  }
+  const user= await User.findOne({email});
+  if(!user){
+    throw new ApiError(400, "User does not exist");
+  }
+  // check if the otp matches or not
+  if(user.resetOtp === '' || user.resetOtp !== otp){
+    throw new ApiError(400, "Invalid OTP");
+  }
+  // check if the otp is expired or not
+  if(user.resetOtpExpireAt < Date.now()){
+    throw new ApiError(400, "OTP expired");
+  }
+  // if the otp is valid, reset the password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  // reset the otp and otp expire time
+  user.resetOtp = '';
+  user.resetOtpExpireAt = 0;
+  await user.save();
+  res.status(200).json(new ApiResponse(200, null, "Password reset successfully"));
+})
+export { isAuthenticated, login, logout, register, resetPassword, sendResetOtp, sendVerifyOtp, verifyEmail };
 

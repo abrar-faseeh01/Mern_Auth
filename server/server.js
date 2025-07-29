@@ -4,7 +4,7 @@ import 'dotenv/config';
 import express from 'express';
 import connectDB from './config/mongodb.js';
 import authRoutes from './routes/authRoutes.js';
-
+import userRouter from './routes/userRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -21,6 +21,7 @@ app.get('/',(req,res)=>{
 })
 
 app.use('/api/auth',authRoutes)
+app.use('/api/user',userRouter)
 
 app.listen(port,()=>{
     console.log(`Server is running on PORT ${port}`);
