@@ -66,7 +66,7 @@ const login = asyncHandler(async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password)
 
     if(!isMatch){
-        throw new ApiError(400, "Invalid password");
+        throw new ApiError(400, "Wrong password");
     }
 
     // login successful, generate JWT token
