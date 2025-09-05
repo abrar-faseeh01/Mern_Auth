@@ -1,11 +1,13 @@
 // We'll create all the controller functions here and using those functions we'll create API endpoints in the routes file
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE } from '../config/emailTemplates.js';
 import transporter from '../config/nodeMailer.js';
 import User from '../models/userModel.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+
 
 // registration
 const register = asyncHandler(async (req, res) => {
@@ -115,7 +117,8 @@ const sendVerifyOtp =asyncHandler(async (req, res) => {
         from: process.env.SENDER_EMAIL, // Use the email you used to create your Brevo account
         to: user.email, // recipient's email
         subject: "Account Verification OTP",
-        text:`Your OTP is ${otp}. Verify your account with this OTP.`
+        // text:`Your OTP is ${otp}. Verify your account with this OTP.`\
+        html: EMAIL_VERIFY_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.email)
     }
 
     await transporter.sendMail(mailOptions); 
@@ -183,7 +186,8 @@ const sendResetOtp = asyncHandler(async (req, res) => {
         from: process.env.SENDER_EMAIL, 
         to: user.email, 
         subject: "Password Reset OTP",
-        text:`Your OTP is ${otp}. Reset your password with this OTP.`
+        // text:`Your OTP is ${otp}. Reset your password with this OTP.`
+        html: PASSWORD_RESET_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.email)
     }
 
     await transporter.sendMail(mailOptions); 

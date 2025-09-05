@@ -10,7 +10,7 @@ import { AppContext } from "../context/AppContext.jsx";
 const Login = () => {
   const navigate = useNavigate();
 
-  const { backendUrl, setIsLoggedIn } = useContext(AppContext);
+  const { backendUrl, setIsLoggedIn, getUserData } = useContext(AppContext);
   const [state, setState] = useState("Sign Up");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,6 +31,7 @@ const Login = () => {
 
         if (data.success) {
           setIsLoggedIn(true);
+          getUserData();
           navigate("/");
         } else {
           toast.error(data.message);
@@ -43,6 +44,7 @@ const Login = () => {
 
         if (data.success) {
           setIsLoggedIn(true);
+          getUserData();
           navigate("/");
         } else {
           toast.error(data.message);
