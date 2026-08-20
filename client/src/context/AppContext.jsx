@@ -18,7 +18,10 @@ export const AppContextProvider = (props) => {
         getUserData();
       }
     } catch (error) {
-      toast.error(error.message);
+      // 401 just means "not logged in" — not an error worth showing the user
+      if (error.response?.status !== 401) {
+        toast.error(error.response?.data?.message || error.message);
+      }
     }
   };
 
