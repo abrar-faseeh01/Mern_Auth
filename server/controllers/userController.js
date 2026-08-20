@@ -15,6 +15,7 @@ const getUserData = asyncHandler(async (req, res) => {
   res.json(new ApiResponse(200, {
 
     userData: {
+        _id: user._id,
         name: user.name,
         isAccountVerified: user.isAccountVerified
     }
